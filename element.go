@@ -20,6 +20,7 @@ type element struct {
 	name             xml.Name
 	optionalChildren map[xml.Name]struct{}
 	repeatedChildren map[xml.Name]struct{}
+	namespace        string
 }
 
 // newElement returns a new element.
@@ -67,6 +68,7 @@ func (e *element) observeAttrs(attrs []xml.Attr, options *observeOptions) {
 // observeChildElement updates e's observed chardata and child elements with
 // tokens read from decoder.
 func (e *element) observeChildElement(decoder *xml.Decoder, startElement xml.StartElement, depth int, options *observeOptions) error {
+	e.namespace = startElement.Name.Space
 	if options.topLevelAttributes || depth != 0 {
 		e.observeAttrs(startElement.Attr, options)
 	}
@@ -214,7 +216,7 @@ func (e *element) writeGoType(w io.Writer, options *generateOptions, indentPrefi
 				return err
 			}
 		}
-		fmt.Fprintf(w, " `xml:\"%s\"`\n", childElement.name.Local)
+		fmt.Fprintf(w, " `xml:\"%s\"` // %s\n", childElement.name.Local, e.namespace)
 	}
 
 	fmt.Fprintf(w, "%s}", indentPrefix)
